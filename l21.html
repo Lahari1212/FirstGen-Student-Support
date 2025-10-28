@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>First-Gen Student Support Portal — Updated</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root{
+    --brand-1:#0b3d91; --brand-2:#0077b6; --accent:#00b4d8; --muted:#47515b;
+    --bg:#f6fbff; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Inter',system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#0e2430;overflow-y:scroll}
+  .container{max-width:1150px;margin:0 auto;padding:0 18px}
+  /* SPLASH */
+  #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--brand-1),var(--brand-2));color:#fff;z-index:99999;font-weight:800;transition:opacity .45s ease,visibility .45s}
+  #splash.hidden{opacity:0;visibility:hidden}
+  #splash h1{font-size:2.4rem;margin:0}
+  #splash p{margin-top:8px;font-size:1rem;opacity:0.95}
+  /* header */
+  header{position:sticky;top:0;background:linear-gradient(90deg,var(--brand-1),var(--brand-2));color:#fff;padding:12px 0;z-index:900;box-shadow:0 6px 20px rgba(2,20,60,0.12)}
+  .header-row{display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:42px;height:42px;border-radius:8px;background:#cfeefb;color:var(--brand-1);display:flex;align-items:center;justify-content:center;font-weight:800}
+  nav a{color:#fff;text-decoration:none;margin:0 8px;font-weight:700;cursor:pointer}
+  nav a:hover{color:#caf0f8}
+  .profile-pill{background:rgba(255,255,255,0.12);padding:6px 10px;border-radius:40px;display:flex;gap:8px;align-items:center;font-weight:700}
+  .logout-btn{background:transparent;border:1px solid rgba(255,255,255,0.12);color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
+  /* hero */
+  .hero{padding:36px 18px;text-align:center;background:linear-gradient(135deg,#0096c7,#48cae4);color:#fff}
+  .hero h2{margin:0;font-size:2rem}
+  .hero p{margin-top:8px;opacity:0.95}
+  /* layout */
+  main{padding:20px 0;max-width:1150px;margin:0 auto}
+  section{margin:20px 0}
+  h2.section-title{text-align:center;color:var(--brand-1);margin-bottom:12px}
+  .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 8px 30px rgba(3,37,65,0.04)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  /* modals */
+  .modal{display:none;position:fixed;inset:0;background:rgba(2,6,23,0.6);z-index:9999;align-items:center;justify-content:center;padding:16px}
+  .modal.open{display:flex}
+  .modal-content{background:#fff;border-radius:12px;padding:18px;max-width:980px;width:100%;box-shadow:0 20px 60px rgba(2,12,40,0.22);max-height:88vh;overflow:auto}
+  .modal-close{float:right;cursor:pointer;font-size:22px;font-weight:700}
+  /* onboarding list */
+  .onboard-list{list-style:none;padding:0;margin:0}
+  .onboard-list li{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #eef4fb}
+  .badge{padding:6px 8px;border-radius:8px;font-weight:700}
+  .done{background:#2ecc71;color:#042}
+  .todo{background:#ffb703;color:#111}
+  /* small helpers */
+  button.primary{background:var(--brand-1);color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:800;cursor:pointer}
+  button.ghost{background:#fff;border:1px solid #eef4fb;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .muted{color:var(--muted)}
+  .fac-dept{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .fac-item{padding:8px 12px;border-radius:10px;background:#f0f8ff;border:1px solid #e6f4fb;font-weight:700;cursor:pointer}
+  .room-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .room-card{padding:12px;border-radius:10px;background:#fff;border:1px solid #f1f6fb;cursor:pointer}
+  /* progress bar */
+  .progress-wrap{background:#eef6fb;border-radius:8px;padding:6px;margin-top:8px}
+  .progress-bar{height:12px;border-radius:8px;background:linear-gradient(90deg,var(--brand-2),var(--accent));width:0%}
+  /* responsive */
+  @media (max-width:760px){ .hero h2{font-size:1.4rem} .header-row{flex-direction:column;gap:10px} }
+</style>
+</head>
+<body>
+
+<!-- Splash -->
+<div id="splash" role="dialog" aria-label="Welcome splash">
+  <h1>Welcome Students 👋</h1>
+  <p>Empowering Every Learner</p>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="container header-row">
+    <div class="brand">
+      <div class="logo">FS</div>
+      <div>
+        <div style="font-weight:800">First-Gen Student Support Portal</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.9)">Bluewater University • Sunrise Institute • Riverbend College</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <nav>
+        <a onclick="scrollToSec('challenges')">Challenges</a>
+        <a onclick="scrollToSec('system')">System</a>
+        <a onclick="openLogin(event)">Dashboard</a>
+        <a onclick="openModal('facultiesModal')">Faculties</a>
+        <a onclick="openModal('roomsModal')">Rooms</a>
+        <a onclick="scrollToSec('resources')">Resources</a>
+      </nav>
+      <div id="profileArea" style="display:flex;align-items:center;gap:10px">
+        <div id="profilePill" class="profile-pill" style="display:none">
+          <span id="pillName">Name</span> • <small id="pillId">ID</small>
+        </div>
+        <button id="logoutBtn" class="logout-btn" style="display:none" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <h2>Empowering First-Gen Students — and Every Student</h2>
+    <p>Your college companion for guidance, resources, mentor matching and success.</p>
+  </div>
+</section>
+
+<main class="container">
+  <!-- Challenges -->
+  <section id="challenges" class="card">
+    <h2 class="section-title">Challenges Faced by Students</h2>
+    <div style="max-width:760px;margin:8px auto;text-align:center">
+      <ul style="list-style:none;padding:0;margin:0 0 12px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;color:var(--muted)">
+        <li>🎓 30% lack academic guidance</li>
+        <li>🧠 32% mental health stress</li>
+        <li>💬 28% language/cultural barriers</li>
+        <li>📱 10% digital tools difficulty</li>
+      </ul>
+      <canvas id="severityChart" style="max-width:420px;margin:10px auto;display:block"></canvas>
+    </div>
+  </section>
+
+  <!-- System -->
+  <section id="system" class="card">
+    <h2 class="section-title">Support System Overview</h2>
+    <div id="system-features" class="grid" style="margin-top:12px"></div>
+  </section>
+
+  <!-- Resources -->
+  <section id="resources" class="card">
+    <h2 class="section-title">Academic Guidelines & Resources</h2>
+    <div id="resources-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>
+  </section>
+
+  <!-- Dashboard preview -->
+  <section id="dashboard" class="card">
+    <h2 class="section-title">Dashboard (Login Required)</h2>
+    <div id="dashboard-sections" class="grid" style="margin-top:12px"></div>
+  </section>
+</main>
+
+<footer style="text-align:center;padding:18px;background:linear-gradient(90deg,var(--brand-1),var(--brand-2));color:#fff;margin-top:18px">
+  © 2025 First-Gen Student Support Portal — Built with Design Thinking
+</footer>
+
+<!-- MODALS -->
+<!-- Login -->
+<div id="loginModal" class="modal" aria-hidden="true">
+  <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <div class="modal-close" onclick="closeModal('loginModal')">&times;</div>
+    <h3 id="loginTitle">Sign in to your Dashboard</h3>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:12px;margin-top:12px">
+      <div>
+        <label style="font-weight:700">Student ID</label>
+        <input id="studentId" style="width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #eef6fb" placeholder="S1001" />
+        <label style="font-weight:700;margin-top:8px;display:block">Password</label>
+        <input id="studentPass" type="password" style="width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #eef6fb" placeholder="pass123" />
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <label><input id="remember" type="checkbox"> Remember me</label>
+          <a href="#">Forgot?</a>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="primary" style="flex:1" onclick="attemptLogin()">Sign In</button>
+          <button class="ghost" style="flex:1" onclick="socialLogin('google')">Google</button>
+        </div>
+      </div>
+      <div style="background:#f8fbff;padding:12px;border-radius:8px">
+        <h4 style="margin:0">Why sign in?</h4>
+        <ul style="color:var(--muted);margin-top:8px;line-height:1.5">
+          <li>🎯 Personalized onboarding checklist</li>
+          <li>🤝 Mentor matching & messages</li>
+          <li>💸 Scholarship & emergency funds tracker</li>
+          <li>📚 Academic guidelines & resources</li>
+        </ul>
+        <div style="margin-top:8px;color:var(--brand-1);font-weight:800">Demo: S1001 / pass123 (first-gen) • S2001 / pass123</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Onboarding Upload Modal -->
+<div id="uploadModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('uploadModal')">&times;</div>
+    <h3>Upload Required Documents</h3>
+    <p class="muted">Select files for each required document. Files are stored locally (mock) and the filename will be saved to your profile for demo purposes.</p>
+    <div style="margin-top:12px;display:grid;gap:10px">
+      <!-- upload rows will be injected -->
+      <div id="uploadRows"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="primary" onclick="closeModal('uploadModal')">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Faculties -->
+<div id="facultiesModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('facultiesModal')">&times;</div>
+    <h3>Faculty Directory</h3>
+    <p class="muted">Click a department to view faculty members.</p>
+    <div class="fac-dept">
+      <div class="fac-item" onclick="showFaculty('cse')">Computer Science (CSE)</div>
+      <div class="fac-item" onclick="showFaculty('ece')">Electronics (ECE)</div>
+      <div class="fac-item" onclick="showFaculty('mech')">Mechanical (MECH)</div>
+    </div>
+    <div id="fac-body" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- Rooms -->
+<div id="roomsModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('roomsModal')">&times;</div>
+    <h3>Campus Rooms & Locations</h3>
+    <div class="room-grid" style="margin-top:12px">
+      <div class="room-card" onclick="showRoom('auditorium')">Grand Auditorium</div>
+      <div class="room-card" onclick="showRoom('library')">Main Library</div>
+      <div class="room-card" onclick="showRoom('physics_lab')">Physics Lab</div>
+      <div class="room-card" onclick="showRoom('chem_lab')">Chemistry Lab</div>
+    </div>
+    <div id="room-body" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- Survey / FAQ -->
+<div id="surveyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('surveyModal')">&times;</div>
+    <h3>Student Surveys & FAQ</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <input id="surveySearch" placeholder="Search Q or A..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #eef6fb" />
+      <button class="primary" onclick="openSurveySubmission()">Submit Response</button>
+    </div>
+    <div id="surveyFAQ" style="margin-top:12px;max-height:54vh;overflow:auto"></div>
+  </div>
+</div>
+
+<!-- Mentor Modal -->
+<div id="mentorModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('mentorModal')">&times;</div>
+    <h3>Mentor Panel</h3>
+    <div id="mentor-list" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- Faculty Feedback -->
+<div id="facultyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('facultyModal')">&times;</div>
+    <h3>Faculty Feedback</h3>
+    <form id="facultyFeedbackForm" style="margin-top:8px">
+      <label>Name</label>
+      <input id="fb-name" style="width:100%;padding:8px;margin-top:6px;border-radius:8px;border:1px solid #eef4fb" />
+      <label style="margin-top:8px">Feedback</label>
+      <textarea id="fb-text" style="width:100%;padding:8px;margin-top:6px;border-radius:8px;border:1px solid #eef4fb" rows="4"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button type="button" class="primary" onclick="submitFacultyFeedback()">Submit</button>
+        <button type="button" class="ghost" onclick="closeModal('facultyModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Dropout Stats -->
+<div id="dropoutModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('dropoutModal')">&times;</div>
+    <h3>Dropout Statistics (Live)</h3>
+    <canvas id="dropoutChart" style="max-width:760px;margin-top:12px"></canvas>
+  </div>
+</div>
+
+<!-- Mentor Stats -->
+<div id="mentorStatsModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('mentorStatsModal')">&times;</div>
+    <h3>Mentor Sentiment (Live)</h3>
+    <canvas id="mentorPie" style="max-width:520px;margin-top:12px"></canvas>
+  </div>
+</div>
+
+<!-- Faculty Responses (radar) -->
+<div id="facultyStatsModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('facultyStatsModal')">&times;</div>
+    <h3>Faculty Responses Overview</h3>
+    <canvas id="facultyRadar" style="max-width:520px;margin-top:12px"></canvas>
+  </div>
+</div>
+
+<!-- Scholarships -->
+<div id="scholarModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('scholarModal')">&times;</div>
+    <h3>Scholarships</h3>
+    <div id="scholar-list" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- Resource Detail / Academic Guidelines -->
+<div id="resourcesModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('resourcesModal')">&times;</div>
+    <h3>Academic Guidelines & Resources</h3>
+    <div id="resource-detail" style="margin-top:8px"></div>
+    <hr style="margin:12px 0" />
+    <div>
+      <h4 style="margin:6px 0">Academic Guidelines</h4>
+      <p class="muted">Previous Year Question Papers — <a href="https://digitalrepository.gitam.edu/" target="_blank" rel="noopener">digitalrepository.gitam.edu</a></p>
+      <p class="muted">Syllabus (B.Tech CSE 2023-24) — <a href="https://www.gitam.edu/sites/default/files/syllabus/B.Tech-CSE-2023-24_13-08-25.pdf" target="_blank" rel="noopener">View syllabus (pdf)</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- Survey submission modal -->
+<div id="surveySubmitModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeModal('surveySubmitModal')">&times;</div>
+    <h3>Submit Survey / Response</h3>
+    <label>Your Name</label>
+    <input id="surveyName" style="width:100%;padding:8px;border-radius:8px;border:1px solid #eef6fb;margin-top:6px" />
+    <label style="margin-top:8px">Response</label>
+    <textarea id="surveyText" rows="5" style="width:100%;padding:8px;border-radius:8px;border:1px solid #eef6fb;margin-top:6px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="primary" onclick="submitSurvey()">Submit</button>
+      <button class="ghost" onclick="closeModal('surveySubmitModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ------------- Boot & Splash ------------- */
+setTimeout(()=>{ const s=document.getElementById('splash'); if(s){ s.classList.add('hidden'); setTimeout(()=>s.remove(),500); } },2000);
+
+/* ------------- Sample Data & Persistence ------------- */
+const SAMPLE = {
+  systemFeatures: ['Navigation Guidance','Peer Mentorship','Personalized Onboarding','Wellness Resources','Dashboard Tracking','Multilingual Support'],
+  resources: [
+    {title:'Onboarding Checklist',desc:'Step-by-step onboarding for new students'},
+    {title:'Scholarship & Grants',desc:'List of scholarships and how to apply'},
+    {title:'Academic Guides',desc:'Study guides, library links, syllabus summaries'},
+    {title:'Digital Tools Help',desc:'How to use LMS, email, registration'},
+    {title:'Mental Health Support',desc:'Counselling contacts and helplines'},
+    {title:'Campus Map & Class Finder',desc:'Map and tips to find classrooms'}
+  ],
+  faculties: {
+    cse:[
+      {name:'B. Ramesh Nayak',role:'Associate Professor',room:"408 'SB'"},
+      {name:'Archana S',role:'Assistant Professor',room:"507 'SB'"},
+      {name:'Arjun K P',role:'Assistant Professor',room:"407 'SB'"},
+      {name:'Rakesh',role:'Assistant Professor',room:"607 'SB'"}
+    ],
+    ece:[
+      {name:'Dr. Sunil Rao',role:'HOD, Communications',room:'EC-201'},
+      {name:'Prof. Neha Jain',role:'VLSI & Embedded',room:'EC-204'}
+    ],
+    mech:[
+      {name:'Dr. Anil Verma',role:'HOD, Material Science',room:'ME-301'},
+      {name:'Prof. Meera Iyer',role:'Thermodynamics',room:'ME-303'}
+    ]
+  },
+  rooms: {
+    auditorium:{title:'Grand Auditorium',desc:'Shivaji Bhavan — major events'},
+    library:{title:'Main Library',desc:'Shivaji Bhavan — 1st Floor — study spaces'},
+    physics_lab:{title:'Physics Lab',desc:'Vishveswaraya Bhavan — Room No. G111 — lab safety mandatory'},
+    chem_lab:{title:'Chemistry Lab',desc:'Vishveswaraya Bhavan — Ground Floor — G003 — lab safety mandatory'}
+  },
+  mentors:[
+    {name:'Dr. Asha Kumari',area:'Academic Guidance',contact:'asha@college.edu'},
+    {name:'Prof. Ramesh Singh',area:'Career & Placements',contact:'ramesh@college.edu'},
+    {name:'Ms. Sita Rao',area:'Mental Wellness',contact:'sita@college.edu'}
+  ],
+  scholarships:[
+    {title:'Merit Scholarship',status:'Open',link:'#'},
+    {title:'Need-Based Grant',status:'Apply',link:'#'},
+    {title:'STEM Women Scholarship',status:'Open',link:'#'}
+  ],
+  faq:[
+    {q:'How do I register for courses?',a:'Use LMS → Course Registration menu.'},
+    {q:'Who do I contact for mental health support?',a:'Contact counselling@college.edu or Student Services.'},
+    {q:'How to apply for scholarships?',a:'Go to Scholarships in your dashboard and check eligibility.'}
+  ],
+  dropoutBase:[42,28,18,12],
+  mentorStats:[60,25,15],
+  facultyRadar:[75,80,65,70,85]
+};
+
+/* local keys */
+const KEY_ONBOARD = 'fg_onboard_v2';
+const KEY_SURVEYS = 'fg_surveys_v2';
+const KEY_FILES = 'fg_files_v2';
+const KEY_SESSION = 'fg_session_v2';
+
+/* default onboard items */
+function defaultOnboard(){
+  return [
+    {id:'orient',task:'Attend orientation',done:false,info:'Attend live or recorded orientation. Date: Aug 15, 2025, 10:00 AM.'},
+    {id:'uploadDocs',task:'Upload Documents',done:false,info:'Required documents: 10th marksheet, 12th marksheet, Aadhaar, TC, Study Certificate.'},
+    {id:'mentor',task:'Meet your mentor',done:false,info:'Schedule meeting with assigned mentor.'},
+    {id:'lms',task:'Activate LMS',done:false,info:'Activate your college LMS account.'},
+    {id:'register',task:'Register courses',done:false,info:'Complete registration in LMS.'},
+    {id:'scholar',task:'Apply scholarships',done:false,info:'Check eligibility and apply.'}
+  ];
+}
+
+function loadOnboard(){ try{ const raw=localStorage.getItem(KEY_ONBOARD); if(raw) return JSON.parse(raw); const def=defaultOnboard(); localStorage.setItem(KEY_ONBOARD,JSON.stringify(def)); return def; }catch(e){ return defaultOnboard(); } }
+function saveOnboard(list){ localStorage.setItem(KEY_ONBOARD,JSON.stringify(list)); }
+
+function loadSurveys(){ return JSON.parse(localStorage.getItem(KEY_SURVEYS)||'[]'); }
+function saveSurveys(arr){ localStorage.setItem(KEY_SURVEYS,JSON.stringify(arr)); }
+
+function loadFiles(){ return JSON.parse(localStorage.getItem(KEY_FILES)||'{}'); }
+function saveFiles(obj){ localStorage.setItem(KEY_FILES,JSON.stringify(obj)); }
+
+function saveSession(sess){ localStorage.setItem(KEY_SESSION,JSON.stringify(sess)); }
+function loadSession(){ return JSON.parse(localStorage.getItem(KEY_SESSION)||'null'); }
+function clearSession(){ localStorage.removeItem(KEY_SESSION); }
+
+/* demo users */
+const DEMO = [
+  {id:'S1001',pass:'pass123',firstGen:true,name:'Asha'},
+  {id:'S2001',pass:'pass123',firstGen:false,name:'Ravi'}
+];
+
+/* ------------- UI init ------------- */
+function initUI(){
+  // system features
+  const sf=document.getElementById('system-features'); sf.innerHTML='';
+  SAMPLE.systemFeatures.forEach(f=>{
+    const d=document.createElement('div'); d.className='card';
+    d.innerHTML=`<strong>${f}</strong><p class="muted" style="margin-top:6px">Learn about ${f.toLowerCase()}.</p><div style="margin-top:8px"><button class="ghost" onclick="alert('Open ${f}')">Open</button></div>`;
+    sf.appendChild(d);
+  });
+
+  // resources grid
+  const rg=document.getElementById('resources-grid'); rg.innerHTML='';
+  SAMPLE.resources.forEach((r,i)=>{
+    const d=document.createElement('div'); d.className='card';
+    d.innerHTML=`<h4 style="margin:0">${r.title}</h4><p class="muted">${r.desc}</p>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="primary" onclick="openResource(${i})">Open</button>
+        <button class="ghost" onclick="openResourceDetail(${i})">Details</button>
+      </div>`;
+    rg.appendChild(d);
+  });
+
+  // dashboard preview cards
+  const db=document.getElementById('dashboard-sections'); db.innerHTML='';
+  const items=['📋 Onboarding Checklist','🤝 Mentor Matches','💸 Scholarships','📚 Resources','📊 Faculty Feedback'];
+  items.forEach(it=>{
+    const card=document.createElement('div'); card.className='card'; card.tabIndex=0;
+    card.innerHTML=`<h4 style="margin:0">${it}</h4><div style="margin-top:8px;color:var(--muted)">Click to open</div>`;
+    card.onclick=()=>{
+      if(it.includes('Onboarding')) openOnboardingModal();
+      if(it.includes('Mentor')) openModal('mentorModal');
+      if(it.includes('Scholar')) openModal('scholarModal');
+      if(it.includes('Resources')) openModal('resourcesModal');
+      if(it.includes('Faculty')) openModal('facultyModal');
+    };
+    db.appendChild(card);
+  });
+
+  // mentor list
+  document.getElementById('mentor-list').innerHTML=SAMPLE.mentors.map(m=>`<div style="padding:8px 0;border-bottom:1px dotted #eef6fb"><strong style="display:block">${m.name}</strong><div class="muted">${m.area}</div><div style="font-size:13px;color:var(--muted)">${m.contact}</div><div style="margin-top:6px"><button class="primary" onclick="contactMentor('${escapeJs(m.name)}','${escapeJs(m.contact)}')">Contact</button></div></div>`).join('');
+
+  // scholarships
+  document.getElementById('scholar-list').innerHTML=SAMPLE.scholarships.map(s=>`<div style="padding:8px 0;border-bottom:1px dotted #eef6fb"><strong>${s.title}</strong><div class="muted">${s.status}</div><div style="margin-top:6px"><button class="primary" onclick="applyScholar('${escapeJs(s.title)}')">Apply</button></div></div>`).join('');
+
+  // FAQ
+  renderFAQ(SAMPLE.faq,'surveyFAQ');
+
+  // survey search
+  const searchEl=document.getElementById('surveySearch');
+  if(searchEl) searchEl.addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase(); const combined=SAMPLE.faq.concat(loadSurveys());
+    renderFAQ(combined.filter(f=> (f.q && f.q.toLowerCase().includes(q)) || (f.a && f.a.toLowerCase().includes(q)) || (f.name && f.name.toLowerCase().includes(q)) || (f.text && f.text.toLowerCase().includes(q)) ),'surveyFAQ');
+  });
+}
+
+/* ------------- Charts ------------- */
+let dropoutChart, mentorPie, facultyRadar;
+function initCharts(){
+  new Chart(document.getElementById('severityChart').getContext('2d'),{
+    type:'doughnut', data:{
+      labels:['Academic Guidance','Mental Health','Language Barriers','Digital Tools'],
+      datasets:[{data:[30,32,28,10],backgroundColor:['#0077b6','#00b4d8','#90e0ef','#caf0f8']}]
+    }, options:{responsive:true,cutout:'70%',plugins:{legend:{position:'bottom'}}}
+  });
+
+  const ctxD=document.getElementById('dropoutChart').getContext('2d');
+  dropoutChart=new Chart(ctxD,{type:'bar',data:{labels:['Financial','Emotional','Academic','Family'],datasets:[{label:'Dropout %',data:SAMPLE.dropoutBase,backgroundColor:['#d7263d','#ff7300','#ffba08','#70e000']}]},options:{scales:{y:{beginAtZero:true,max:100}}}});
+
+  setInterval(()=>{ const d=dropoutChart.data.datasets[0].data.map(v=>Math.max(3,Math.min(100,Math.round((v + (Math.random()-0.5)*3)*10)/10))); dropoutChart.data.datasets[0].data=d; dropoutChart.update(); },2600);
+
+  mentorPie=new Chart(document.getElementById('mentorPie').getContext('2d'),{type:'pie',data:{labels:['Positive','Neutral','Suggestions'],datasets:[{data:SAMPLE.mentorStats,backgroundColor:['#70e000','#ffba08','#d7263d']}]},options:{plugins:{legend:{position:'bottom'}}}});
+
+  facultyRadar=new Chart(document.getElementById('facultyRadar').getContext('2d'),{type:'radar',data:{labels:['Clarity','Supportiveness','Timeliness','Engagement','Availability'],datasets:[{label:'Faculty Scores',data:SAMPLE.facultyRadar,backgroundColor:'rgba(11,61,145,0.12)',borderColor: 'rgba(11,61,145,0.9)',pointBackgroundColor:'#fff',borderWidth:2}]},options:{scales:{r:{beginAtZero:true,max:100}},plugins:{legend:{position:'bottom'}}}});
+}
+
+/* ------------- FAQ / Surveys ------------- */
+function renderFAQ(list,containerId){
+  const cont=document.getElementById(containerId); if(!cont) return;
+  const arr = Array.isArray(list)? list : (list || []);
+  // combine preset faq and saved surveys appropriately
+  cont.innerHTML = arr.map((f,i)=>{
+    if(f.name && f.text) return `<div style="margin-bottom:8px;border:1px solid #eef6fb;border-radius:8px;overflow:hidden"><div style="background:#f8fbff;padding:10px;font-weight:700">From: ${escapeHtml(f.name)}</div><div style="padding:10px">${escapeHtml(f.text)}</div></div>`;
+    return `<div style="margin-bottom:8px;border:1px solid #eef6fb;border-radius:8px;overflow:hidden"><div style="background:#f8fbff;padding:10px;cursor:pointer;font-weight:700" onclick="toggleFAQ('${containerId}',${i})">Q: ${escapeHtml(f.q)}</div><div id="${containerId}-ans-${i}" style="padding:0 10px;max-height:0;overflow:hidden;transition:max-height .3s">A: ${escapeHtml(f.a||'')}</div></div>`;
+  }).join('');
+}
+function toggleFAQ(containerId,i){
+  const el=document.getElementById(`${containerId}-ans-${i}`); if(!el) return;
+  if(el.style.maxHeight && el.style.maxHeight!=='0px'){ el.style.maxHeight='0'; } else { el.style.maxHeight = el.scrollHeight + 'px'; }
+}
+function openSurveySubmission(){ openModal('surveySubmitModal'); }
+function submitSurvey(){
+  const name=document.getElementById('surveyName').value.trim();
+  const text=document.getElementById('surveyText').value.trim();
+  if(!name||!text){ alert('Please provide name and response'); return; }
+  const arr=loadSurveys(); arr.unshift({name,text,date:new Date().toISOString()}); saveSurveys(arr);
+  closeModal('surveySubmitModal'); renderFAQ(SAMPLE.faq.concat(arr),'surveyFAQ'); alert('Thanks — response saved locally.');
+}
+
+/* ------------- Modal helpers & scroll ------------- */
+function openModal(id){ const m=document.getElementById(id); if(!m) return; m.classList.add('open'); m.setAttribute('aria-hidden','false'); const focusable = m.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'); if(focusable.length) focusable[0].focus(); }
+function closeModal(id){ const m=document.getElementById(id); if(!m) return; m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open')); });
+document.querySelectorAll('.modal').forEach(m=> m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }) );
+function scrollToSec(id){ document.getElementById(id).scrollIntoView({behavior:'smooth',block:'start'}); }
+
+/* ------------- Faculties & Rooms ------------- */
+function showFaculty(dept){
+  const body=document.getElementById('fac-body'); if(!body) return;
+  const list=SAMPLE.faculties[dept]||[];
+  body.innerHTML = `<div style="margin-top:10px"><h4 style="margin:0">${dept.toUpperCase()} Faculty</h4>
+    <ul style="list-style:none;padding:0;margin-top:8px">${list.map(f=>`<li style="padding:8px 0;border-bottom:1px solid #eef6fb"><strong>${escapeHtml(f.name)}</strong><div class="muted">${escapeHtml(f.role)} • ${escapeHtml(f.room)}</div><div style="margin-top:6px"><button class="primary" onclick="openFacultyProfile('${escapeJs(f.name)}')">Profile</button></div></li>`).join('')}</ul></div>`;
+}
+function openFacultyProfile(name){ alert('Open profile for '+name+' (demo)'); }
+function showRoom(key){
+  const body=document.getElementById('room-body'); if(!body) return;
+  const r=SAMPLE.rooms[key];
+  if(!r) { body.innerHTML='Not found'; return; }
+  body.innerHTML=`<div style="margin-top:10px"><h4 style="margin:0">${escapeHtml(r.title)}</h4><p class="muted">${escapeHtml(r.desc)}</p><p><strong>How to reach:</strong> Use elevator or go from steps opposite to elevator.</p></div>`;
+}
+
+/* ------------- Login / Session / Dashboard ------------- */
+function openLogin(e){ if(e) e?.preventDefault(); openModal('loginModal'); }
+
+function attemptLogin(){
+  const id=document.getElementById('studentId').value.trim();
+  const pw=document.getElementById('studentPass').value;
+  const user=DEMO.find(u=>u.id===id && u.pass===pw);
+  if(!user){ alert('Invalid demo credentials. Use S1001/pass123 or S2001/pass123'); return; }
+  // save session
+  saveSession({id:user.id,name:user.name,firstGen:user.firstGen,ts:Date.now()});
+  closeModal('loginModal');
+  setTimeout(()=>openUserDashboard(user),260);
+}
+
+function socialLogin(provider){
+  alert('Simulated social login: '+provider);
+  const user=DEMO[0]; saveSession({id:user.id,name:user.name,firstGen:user.firstGen,ts:Date.now()});
+  closeModal('loginModal'); setTimeout(()=>openUserDashboard(user),260);
+}
+
+function logout(){
+  clearSession();
+  // hide profile
+  document.getElementById('profilePill').style.display='none';
+  document.getElementById('logoutBtn').style.display='none';
+  alert('You have been logged out.');
+  // reload to restore default UI
+  setTimeout(()=>location.reload(),200);
+}
+
+/* open dashboard and render onboarding with progress and upload button */
+function openUserDashboard(user){
+  const modal=document.createElement('div'); modal.className='modal open'; modal.style.zIndex=120000;
+  const inner=document.createElement('div'); inner.className='modal-content';
+
+  inner.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>Welcome, ${escapeHtml(user.name)}</h3>
+      <div style="font-weight:700;color:var(--muted)">${escapeHtml(user.id)}</div>
+    </div>
+    <p class="muted">${user.firstGen? 'You are flagged as a First-Gen student — recommended resources are highlighted.' : 'Your dashboard is ready.'}</p>
+    <div style="margin-top:12px" id="onboardHeader">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Onboarding Progress</strong></div>
+        <div id="onboardCounter" class="muted">0 of 0</div>
+      </div>
+      <div class="progress-wrap" style="margin-top:8px"><div id="onboardBar" class="progress-bar"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="card"><h4>📋 Onboarding Checklist</h4><ul id="onboard-list" class="onboard-list" style="margin-top:8px"></ul></div>
+      <div class="card"><h4>🤝 Mentor Matches</h4><div id="mentor-mini" style="margin-top:8px"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:12px">
+      <div class="card"><h4>💸 Scholarships</h4><div id="sch-mini"></div></div>
+      <div class="card"><h4>📚 Recommended Resources</h4><div id="rec-mini"></div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="open-survey-btn" class="primary">Open Surveys</button>
+      <button id="open-mentor-btn" class="ghost">Open Mentor Panel</button>
+      <button class="ghost" onclick="openModal('dropoutModal')">Dropout Stats</button>
+      <button class="ghost" onclick="openModal('mentorStatsModal')">Mentor Stats</button>
+      <button class="ghost" onclick="openModal('facultyStatsModal')">Faculty Overview</button>
+    </div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end"><button class="ghost" id="closeDash">Close</button></div>
+  `;
+
+  modal.appendChild(inner); document.body.appendChild(modal);
+
+  // show profile pill & logout
+  document.getElementById('profilePill').style.display='flex'; document.getElementById('pillName').textContent=user.name; document.getElementById('pillId').textContent=user.id;
+  document.getElementById('logoutBtn').style.display='inline-block';
+
+  // populate onboard list
+  const onboard = loadOnboard();
+  const ol=document.getElementById('onboard-list'); ol.innerHTML='';
+  onboard.forEach((o,idx)=>{
+    const li=document.createElement('li');
+    li.innerHTML=`<div style="display:flex;gap:12px;align-items:center"><div style="min-width:220px">${escapeHtml(o.task)}</div><div class="muted" style="font-size:13px">${escapeHtml(o.info)}</div></div>
+      <div><button class="ghost" onclick="onboardLearn(${idx})">Learn</button>
+      <button id="onbtn-${idx}" class="badge ${o.done? 'done':'todo'}" onclick="toggleOnboardIndex(${idx})">${o.done? 'Done':'Mark'}</button>`;
+    ol.appendChild(li);
+  });
+
+  // populate mentor-mini, sch-mini, rec-mini
+  document.getElementById('mentor-mini').innerHTML=SAMPLE.mentors.map(m=>`<div style="padding:6px 0;border-bottom:1px dotted #eef6fb"><strong>${m.name}</strong><div class="muted">${m.area}</div><div style="font-size:13px;color:var(--muted)">${m.contact}</div><div style="margin-top:6px"><button class="primary" onclick="contactMentor('${escapeJs(m.name)}','${escapeJs(m.contact)}')">Contact</button></div></div>`).join('');
+  document.getElementById('sch-mini').innerHTML=SAMPLE.scholarships.map(s=>`<div style="padding:6px 0;border-bottom:1px dotted #eef6fb"><strong>${s.title}</strong><div class="muted">${s.status}</div><div style="margin-top:6px"><button class="primary" onclick="applyScholar('${escapeJs(s.title)}')">Apply</button></div></div>`).join('');
+  document.getElementById('rec-mini').innerHTML=SAMPLE.resources.slice(0,4).map(r=>`<div style="padding:6px 0;border-bottom:1px dotted #eef6fb"><strong>${r.title}</strong><div class="muted">${r.desc}</div><div style="margin-top:6px"><button class="ghost" onclick="openResourceDetailByTitle('${escapeJs(r.title)}')">Open</button></div></div>`).join('');
+
+  inner.querySelector('#open-survey-btn').addEventListener('click',()=>openModal('surveyModal'));
+  inner.querySelector('#open-mentor-btn').addEventListener('click',()=>openModal('mentorModal'));
+  inner.querySelector('#closeDash').addEventListener('click',()=>modal.remove());
+
+  // render progress
+  updateOnboardProgress();
+
+  // create upload rows for upload modal
+  renderUploadRows();
+}
+
+/* onboarding helpers */
+function onboardLearn(idx){
+  const items = loadOnboard();
+  const it = items[idx];
+  if(!it) return;
+  // special case: uploadDocs -> open upload modal
+  if(it.id === 'uploadDocs'){ openModal('uploadModal'); return; }
+  alert(it.info);
+}
+function toggleOnboardIndex(idx){
+  const list = loadOnboard();
+  list[idx].done = !list[idx].done;
+  saveOnboard(list);
+  // reflect in UI and progress
+  document.querySelectorAll('#onboard-list .badge').forEach((b,i)=>{ b.className = 'badge ' + (list[i].done ? 'done' : 'todo'); b.textContent = list[i].done ? 'Done' : 'Mark'; });
+  updateOnboardProgress();
+}
+
+/* progress bar */
+function updateOnboardProgress(){
+  const list = loadOnboard();
+  const done = list.filter(i=>i.done).length;
+  const total = list.length;
+  const percent = Math.round((done/total)*100);
+  const bar = document.getElementById('onboardBar');
+  const counter = document.getElementById('onboardCounter');
+  if(bar) bar.style.width = percent + '%';
+  if(counter) counter.textContent = `${done} of ${total}`;
+}
+
+/* ------------- Upload modal: rows & behavior (mock uploads) ------------- */
+const requiredFiles = [
+  {key:'10th',label:'10th Mark List'},
+  {key:'12th',label:'12th Mark List'},
+  {key:'aadhaar',label:'Aadhaar Card'},
+  {key:'tc',label:'Transfer Certificate (TC)'},
+  {key:'study',label:'Study Certificate'}
+];
+
+function renderUploadRows(){
+  const container = document.getElementById('uploadRows');
+  if(!container) return;
+  const files = loadFiles();
+  container.innerHTML = '';
+  requiredFiles.forEach((f,i)=>{
+    const uploaded = files[f.key];
+    const row = document.createElement('div');
+    row.style.display = 'flex'; row.style.alignItems='center'; row.style.justifyContent='space-between'; row.style.gap='12px'; row.style.padding='8px 0';
+    row.innerHTML = `<div style="min-width:260px"><strong>${f.label}</strong><div class="muted" style="font-size:13px">${uploaded ? 'Uploaded: ' + escapeHtml(uploaded.name) : 'Not uploaded'}</div></div>
+      <div style="display:flex;gap:8px">
+        <input id="file-input-${f.key}" type="file" style="display:none" onchange="handleFileSelect(event,'${f.key}','${f.label}')" />
+        <button class="ghost" onclick="document.getElementById('file-input-${f.key}').click()">Upload</button>
+        <button class="ghost" onclick="clearUploaded('${f.key}')">Clear</button>
+      </div>`;
+    container.appendChild(row);
+  });
+}
+
+/* handle file selection (mock) */
+function handleFileSelect(evt, key, label){
+  const file = evt.target.files && evt.target.files[0];
+  if(!file) return;
+  const files = loadFiles();
+  files[key] = {name:file.name,size:file.size,ts:Date.now()};
+  saveFiles(files);
+  // mark onboard uploadDocs as done if all required uploaded
+  checkUploadCompletion();
+  renderUploadRows();
+  updateOnboardProgress();
+  alert(`${label} uploaded (mock). Filename stored locally: ${file.name}`);
+}
+
+function clearUploaded(key){
+  const files = loadFiles();
+  delete files[key];
+  saveFiles(files);
+  renderUploadRows();
+  updateOnboardProgress();
+  alert('File cleared for '+key);
+}
+
+/* check if all required files uploaded -> mark uploadDocs done */
+function checkUploadCompletion(){
+  const files = loadFiles();
+  const all = requiredFiles.every(r=> files[r.key]);
+  const onboard = loadOnboard();
+  const idx = onboard.findIndex(x=>x.id==='uploadDocs');
+  if(idx>=0){
+    onboard[idx].done = all;
+    saveOnboard(onboard);
+    // update UI badges if dashboard open
+    document.querySelectorAll('#onboard-list .badge').forEach((b,i)=>{
+      const list = loadOnboard();
+      b.className = 'badge ' + (list[i].done ? 'done' : 'todo');
+      b.textContent = list[i].done ? 'Done' : 'Mark';
+    });
+  }
+}
+
+/* ------------- Resource helpers ------------- */
+function openResource(i){ openModal('resourcesModal'); document.getElementById('resource-detail').innerHTML=`<h4>${escapeHtml(SAMPLE.resources[i].title)}</h4><p class="muted">${escapeHtml(SAMPLE.resources[i].desc)}</p><p><a href="#" onclick="alert('Open resource (mock)')">Open resource</a></p>`; }
+function openResourceDetailByTitle(title){ openModal('resourcesModal'); document.getElementById('resource-detail').innerHTML=`<h4>${escapeHtml(title)}</h4><p class="muted">Open academic guideline or resource.</p>`; }
+function openResourceDetail(i){ alert('Resource details: '+SAMPLE.resources[i].title); }
+
+/* ------------- Actions: mentors, scholarships, faculty feedback ------------- */
+function contactMentor(name, contact){ alert('Simulated message composer to '+name+' ('+contact+')'); }
+function applyScholar(title){ alert('Simulated application opened for '+title); }
+
+function submitFacultyFeedback(){
+  const name=document.getElementById('fb-name').value.trim();
+  const text=document.getElementById('fb-text').value.trim();
+  if(!name||!text){ alert('Please provide name and feedback'); return; }
+  const arr = JSON.parse(localStorage.getItem('fg_faculty_feedback_v1')||'[]');
+  arr.unshift({name,text,date:new Date().toISOString()});
+  localStorage.setItem('fg_faculty_feedback_v1',JSON.stringify(arr));
+  alert('Thanks — feedback recorded locally.');
+  document.getElementById('fb-name').value=''; document.getElementById('fb-text').value='';
+  closeModal('facultyModal');
+}
+
+/* ------------- Utilities ------------- */
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeJs(s){ return String(s||'').replace(/'/g,"\\'").replace(/\n/g,'\\n'); }
+
+/* ------------- Init on DOMContentLoaded ------------- */
+document.addEventListener('DOMContentLoaded',()=>{
+  initUI();
+  initCharts();
+
+  // restore session if remember-me
+  const sess = loadSession();
+  if(sess && sess.id){
+    // show profile pill and logout
+    document.getElementById('profilePill').style.display='flex'; document.getElementById('pillName').textContent = sess.name; document.getElementById('pillId').textContent = sess.id;
+    document.getElementById('logoutBtn').style.display='inline-block';
+  }
+
+  // render surveys if any
+  const stored = loadSurveys();
+  if(stored.length) renderFAQ(SAMPLE.faq.concat(stored),'surveyFAQ');
+
+  // render upload rows (in case user opens upload modal)
+  renderUploadRows();
+
+  // ensure uploadDocs done state if files exist
+  checkUploadCompletion();
+  updateOnboardProgress();
+});
+</script>
+
+</body>
+</html>
